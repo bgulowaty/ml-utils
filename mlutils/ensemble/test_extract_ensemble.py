@@ -11,6 +11,12 @@ from sklearn.preprocessing import LabelEncoder
 
 from mlutils.ensemble.extract_ensemble import extract_classifiers_from_bagging
 
+TRAIN_TEST_TUPLES = [
+    ('test-resources/nursery-train-1-s2.csv', 'test-resources/nursery-train-1-s2.csv'),
+    ('test-resources/breast-train-0-s1.csv', 'test-resources/breast-test-0-s1.csv'),
+    ('test-resources/hepatitis-train-3-s1.csv', 'test-resources/hepatitis-test-3-s1.csv'),
+    ('test-resources/abalone-train-2-s2.csv', 'test-resources/abalone-test-2-s2.csv'),
+]
 
 def read_dataset(path):
     data = pd.read_csv(path)
@@ -25,11 +31,7 @@ def read_dataset(path):
 
 @pytest.mark.parametrize(
     "train_path,test_path",
-    [
-        ('test-resources/nursery-train-1-s2.csv', 'test-resources/nursery-train-1-s2.csv'),
-        ('test-resources/breast-train-0-s1.csv', 'test-resources/breast-test-0-s1.csv'),
-        ('test-resources/hepatitis-train-3-s1.csv', 'test-resources/hepatitis-test-3-s1.csv'),
-    ]
+    TRAIN_TEST_TUPLES
 )
 def test_given_test_data_should_have_same_accuracy_as_original_ensemble(train_path, test_path):
     # given
@@ -53,11 +55,7 @@ def test_given_test_data_should_have_same_accuracy_as_original_ensemble(train_pa
 
 @pytest.mark.parametrize(
     "train_path,test_path",
-    [
-        ('test-resources/nursery-train-1-s2.csv', 'test-resources/nursery-train-1-s2.csv'),
-        ('test-resources/breast-train-0-s1.csv', 'test-resources/breast-test-0-s1.csv'),
-        ('test-resources/hepatitis-train-3-s1.csv', 'test-resources/hepatitis-test-3-s1.csv'),
-    ]
+    TRAIN_TEST_TUPLES
 )
 def test_can_be_pruned(train_path, test_path):
     # given
