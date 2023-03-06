@@ -1,4 +1,5 @@
 import pandas as pd
+from box import Box
 
 
 def read_datafile(path):
@@ -13,7 +14,7 @@ def read_datafile(path):
 
 
 def read_dataset(path):
-    if path.constains('test'):
+    if 'test' in path:
         test_path = path
         train_path = path.replace('test', 'train')
     else:
