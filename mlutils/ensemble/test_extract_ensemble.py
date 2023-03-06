@@ -18,6 +18,7 @@ TRAIN_TEST_TUPLES = [
     ('test-resources/abalone-train-2-s2.csv', 'test-resources/abalone-test-2-s2.csv'),
 ]
 
+
 def read_dataset(path):
     data = pd.read_csv(path)
     x = data.drop('TARGET', axis=1).values
@@ -52,6 +53,7 @@ def test_given_test_data_should_have_same_accuracy_as_original_ensemble(train_pa
     bagging_acc = accuracy_score(bagging.predict(test.x), test.y)
 
     assert extracted_acc == bagging_acc
+
 
 @pytest.mark.parametrize(
     "train_path,test_path",
