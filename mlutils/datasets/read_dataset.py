@@ -23,10 +23,10 @@ def right_replace(s, old, new, occurrence):
 def read_dataset(path):
     if 'test' in path:
         test_path = path
-        train_path = right_replace(path, 'train', 'test', 1)
+        train_path = right_replace(path, 'test', 'train', 1)
     else:
         train_path = path
-        test_path = right_replace(path, 'test', 'train', 1)
+        test_path = right_replace(path, 'train', 'test', 1)
 
     logger.info("Reading train={} and test={}", train_path, test_path)
 
