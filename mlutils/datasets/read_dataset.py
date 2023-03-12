@@ -3,11 +3,11 @@ from box import Box
 from loguru import logger
 
 
-def read_datafile(path):
+def read_datafile(path, target_column_name="TARGET"):
     logger.debug("Reading path={}", path)
     data = pd.read_csv(path)
-    x = data.drop('TARGET', axis=1).values
-    y = data['TARGET'].values
+    x = data.drop(target_column_name, axis=1).values
+    y = data[target_column_name].values
 
     return {
         "x": x,
