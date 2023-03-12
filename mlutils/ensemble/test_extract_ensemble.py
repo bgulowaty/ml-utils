@@ -19,10 +19,10 @@ TRAIN_TEST_TUPLES = [
 ]
 
 
-def read_dataset(path):
+def read_dataset(path, clas_column_name="TARGET"):
     data = pd.read_csv(path)
-    x = data.drop('TARGET', axis=1).values
-    y = data['TARGET'].values
+    x = data.drop(clas_column_name, axis=1).values
+    y = data[clas_column_name].values
 
     return Box({
         "x": x,
