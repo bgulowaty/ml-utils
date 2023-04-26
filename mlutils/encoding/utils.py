@@ -3,7 +3,6 @@ from sklearn.preprocessing import LabelEncoder
 
 from mlutils.encoding.refittable_label_encoder import RefitableLabelEncoder
 
-
 def encode_columns_to_labels(numpy_array):
     if len(numpy_array.shape) != 2:
         raise Exception("Only 2d arrays are supported")
