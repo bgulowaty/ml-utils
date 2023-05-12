@@ -1,5 +1,5 @@
 import subprocess
-import importlib_resources
+import importlib.resources
 import time
 import sys
 import tempfile
@@ -48,8 +48,8 @@ if {instance_id_param_name} is None:
         ),
     ]
 
-    path = pathlib.Path().resolve() / f"{notebook_name}-{str(uuid.uuid4())}.ipynb"
-    fp = path.open()
+    path = pathlib.Path().resolve() / f"{notebook_name.replace('.ipynb', '')}-{str(uuid.uuid4())}.ipynb"
+    fp = path.open(mode='w')
     nbformat.write(experiment_notebook, fp)
     fp.close()
 
@@ -59,7 +59,7 @@ if {instance_id_param_name} is None:
 def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path = None, papermill_path=None, script_path=None,
                              notebook_run_id_param="EXPERIMENT_INSTANCE_ID"):
     if script_path is None:
-        script_path = str(importlib_resources.files("mlutils")/ "resources" / "slurm-script.sh")
+        script_path = str(importlib.resources.files("mlutils")/ "resources" / "slurm-script.sh")
 
     if papermill_path is None:
         papermill_path = os.path.join(os.path.dirname(sys.executable), "papermill")

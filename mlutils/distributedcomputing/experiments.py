@@ -30,6 +30,8 @@ def run_experiments(run_ids, experiment_function, backend='joblib', **params):
             instance_id_param_name=notebook_run_id_param
         )
 
+        logger.info("Notebook path={}", path_to_notebook)
+
         return run_experiments_in_slurm(
             run_ids=run_ids,
             notebook_path=str(path_to_notebook),
