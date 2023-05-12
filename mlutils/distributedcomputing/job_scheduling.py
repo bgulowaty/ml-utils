@@ -1,8 +1,78 @@
 import subprocess
+import importlib_resources
+import time
+import sys
+import tempfile
+import nbformat
+import os
+import pathlib
+import uuid
+from loguru import logger
 
 
-def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path, papermill_path, script_path="slurm-script.sh",
+def create_experiment_notebook(notebook_name, experiment_function = "run_experiment", instance_id_param_name = "EXPERIMENT_INSTANCE_ID", name = None, path=None):
+    if path != None:
+        raise NotImplementedError("Path is not implemented")
+    if name != None:
+        raise NotImplementedError("Name is not implemented")
+
+    logger.info(f"""
+    Creating experiment notebook
+        notebook_name={notebook_name}
+        experiment_function={experiment_function}
+        instance_id_param_name={instance_id_param_name}
+        """)
+
+    experiment_notebook = nbformat.v4.new_notebook()
+
+    experiment_notebook['cells'] = [
+        nbformat.v4.new_code_cell(
+            f"{instance_id_param_name} = None",
+            metadata = {
+                "tags": ["parameters"]
+            }
+        ),
+        nbformat.v4.new_code_cell(
+            f"""
+if {instance_id_param_name} is None:
+    raise AssertionError("Experiment id not set")
+        """
+        ),
+        nbformat.v4.new_code_cell(
+            f"%run ./{notebook_name}"
+        ),
+        nbformat.v4.new_code_cell(
+            f"""
+{experiment_function}({instance_id_param_name})
+            """
+        ),
+    ]
+
+    path = pathlib.Path().resolve() / f"{notebook_name}-{str(uuid.uuid4())}.ipynb"
+    fp = path.open()
+    nbformat.write(experiment_notebook, fp)
+    fp.close()
+
+    return path
+
+
+def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path = None, papermill_path=None, script_path=None,
                              notebook_run_id_param="EXPERIMENT_INSTANCE_ID"):
+    if script_path is None:
+        script_path = str(importlib_resources.files("mlutils")/ "resources" / "slurm-script.sh")
+
+    if papermill_path is None:
+        papermill_path = os.path.join(os.path.dirname(sys.executable), "papermill")
+
+    if output_dir_path is None:
+        output_dir_path = tempfile.mkdtemp()
+
+
+    logger.info("""
+        script_path={},
+        papermill_path={},
+        output_dir_path={}""", script_path, papermill_path, output_dir_path)
+
     futures = []
 
     for run_id in run_ids:
