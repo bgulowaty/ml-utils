@@ -25,6 +25,14 @@ def create_experiment_notebook(notebook_name, experiment_function = "run_experim
 
     experiment_notebook = nbformat.v4.new_notebook()
 
+    experiment_notebook['metadata'] = {
+        "kernelspec": {
+            "display_name": "Python 3 (ipykernel)",
+            "language": "python",
+            "name": "python3"
+        }
+    }
+
     experiment_notebook['cells'] = [
         nbformat.v4.new_code_cell(
             f"{instance_id_param_name} = None",
@@ -65,7 +73,7 @@ def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path = None, pap
         papermill_path = os.path.join(os.path.dirname(sys.executable), "papermill")
 
     if output_dir_path is None:
-        output_dir_path = tempfile.mkdtemp()
+        output_dir_path = pathlib.Path(tempfile.mkdtemp())
 
 
     logger.info("""
@@ -83,6 +91,7 @@ def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path = None, pap
 
         slurm_command = f"sbatch -o {str(std_out_path)} -e {str(std_err_path)} {script_path} \"{papermill_command}\""
 
+        logger.debug(slurm_command)
         subprocess.run(slurm_command, shell=True)
 
     return futures
