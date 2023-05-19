@@ -5,7 +5,6 @@ description = ""
 authors = ["Bogdan Gulowaty <b.gulowaty@gmail.com>"]
 readme = "README.md"
 packages = [{include = "mlutils"}]
-include = ["resources/slurm-script.sh"]
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -2,7 +2,7 @@ from joblib import Parallel, delayed
 from box import Box
 from loguru import logger
 
-from mlutils.distributedcomputing.job_scheduling import create_experiment_notebook, run_experiments_in_slurm
+from mlutils.distributedcomputing.job_scheduling import create_experiment_notebook, run_experiments_in_slurm, create_slurm_script
 
 
 def run_experiments(run_ids, experiment_function, backend='joblib', **params):
@@ -32,13 +32,15 @@ def run_experiments(run_ids, experiment_function, backend='joblib', **params):
 
         logger.info("Notebook path={}", path_to_notebook)
 
+        slurm_script_path = create_slurm_script(params.get('slurm_arguments', {}))
+
         return run_experiments_in_slurm(
             run_ids=run_ids,
             notebook_path=str(path_to_notebook),
             output_dir_path = params.get('output_dir_path', None),
             papermill_path = params.get('papermill_path', None),
-            script_path = params.get('script_path', None),
-            notebook_run_id_param=notebook_run_id_param
+            script_path = slurm_script_path,
+            notebook_run_id_param=notebook_run_id_param,
         )
 
     raise NotImplementedError(f"{backend} not supported")
