@@ -1,9 +1,27 @@
+import traceback
+
 import mlflow
 from box import Box
 from joblib import Parallel, delayed
 from mlflow import MlflowClient
 from tqdm import tqdm
 from loguru import logger
+
+def terminate_run(run_id, client = MlflowClient()):
+    client.set_terminated(run_id, "FINISHED")
+
+def finish_run_and_print_exception(run_id, exception, client = MlflowClient(), logger = logger):
+    logger.error(exception)
+    tb = traceback.format_exc()
+    logger.error(tb)
+    client.set_tag(run_id, "exception", traceback.format_exc())
+    client.set_terminated(run_id, "FAILED")
+
+def log_2d_metrics(array, names, run_id, mlflow_client = MlflowClient()):
+    assert len(names) == array.shape[1]
+    for step, metrics in enumerate(array):
+        for metric_name, value in zip(names, metrics):
+            mlflow_client.log_metric(run_id=run_id, key=metric_name, value=value, step=step)
 
 def create_runs_for_params(params, experiment_id = None, experiment_name = None, client = MlflowClient(), n_jobs=-1):
     if experiment_id is None:
