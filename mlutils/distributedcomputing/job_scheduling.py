@@ -119,9 +119,7 @@ def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path=None, paper
     logger.info("""
         script_path={},
         papermill_path={},
-        output_dir_path={}
-        run_in_bacthes={},
-        username={}""", script_path, papermill_path, output_dir_path, run_in_batches, username)
+        output_dir_path={}""", script_path, papermill_path, output_dir_path)
 
     futures = []
 
