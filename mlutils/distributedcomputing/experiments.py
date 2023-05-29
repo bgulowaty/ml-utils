@@ -26,10 +26,6 @@ def run_experiments(run_ids, experiment_function, backend='joblib', **params):
         notebook_run_id_param = params.get("notebook_run_id_param", "EXPERIMENT_INSTANCE_ID")
 
         should_run_in_batches = params.get("run_in_batches", False)
-        username = params.get("username", "bogul")
-        batch_size = params.get("batch_size", 250)
-        sleep_interval = params.get("sleep_interval", 25)
-
         path_to_notebook = create_experiment_notebook(
             notebook_name=params['notebook_path'],
             experiment_function=experiment_function,
@@ -43,8 +39,9 @@ def run_experiments(run_ids, experiment_function, backend='joblib', **params):
         if should_run_in_batches:
             return run_in_batches(
                 run_ids=run_ids,
-                batch_size=250,
-                sleep_interval=25,
+                batch_size=params.get("batch_size", 250),
+                sleep_interval=params.get("sleep_interval", 25),
+                username=params.get("username", "bogul"),
                 command = lambda single_batch: run_experiments_in_slurm(
                     run_ids=single_batch,
                     notebook_path=str(path_to_notebook),
