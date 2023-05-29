@@ -101,6 +101,9 @@ if {instance_id_param_name} is None:
 
     return path
 
+how_many_jobs = lambda username: int(
+    subprocess.run(f"squeue | grep {username} | wc -l", stdout=subprocess.PIPE, shell=True).stdout.decode(
+        'utf-8').strip())
 
 def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path=None, papermill_path=None, script_path=None,
                              notebook_run_id_param="EXPERIMENT_INSTANCE_ID"):
@@ -116,7 +119,9 @@ def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path=None, paper
     logger.info("""
         script_path={},
         papermill_path={},
-        output_dir_path={}""", script_path, papermill_path, output_dir_path)
+        output_dir_path={}
+        run_in_bacthes={},
+        username={}""", script_path, papermill_path, output_dir_path, run_in_batches, username)
 
     futures = []
 
@@ -140,25 +145,22 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 
-how_many_jobs = lambda username: int(
-    subprocess.run(f"squeue | grep {username} | wc -l", stdout=subprocess.PIPE, shell=True).stdout.decode(
-        'utf-8').strip())
 
 
-def run_in_batches(run_ids, notebook_path, output_dir_path, username='bogul', batch_size=250, sleep_interval=25):
+def run_in_batches(run_ids, command, username = 'bogul', batch_size=250, sleep_interval=25):
     chunked_run_ids = chunks(run_ids, batch_size)
 
     while (True):
         jobs_currently = how_many_jobs(username)
         if jobs_currently <= batch_size:
-            print(f"There are {jobs_currently} runnig jobs, scheduling next batch of {batch_size}")
+            logger.info(f"There are {jobs_currently} runnig jobs, scheduling next batch of {batch_size}")
             try:
                 next_batch = next(chunked_run_ids)
-                run_experiments_in_slurm(next_batch, notebook_path, output_dir_path)
+                command(next_batch)
             except StopIteration:
-                print("End of batches!")
+                logger.info("End of batches!")
                 break
         else:
-            print(f"There are {jobs_currently}, cant schedule yet!")
-        print(f"Waiting {sleep_interval}")
+            logger.info(f"There are {jobs_currently}, cant schedule yet!")
+        logger.info(f"Waiting {sleep_interval}")
         time.sleep(sleep_interval)

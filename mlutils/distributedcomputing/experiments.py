@@ -2,7 +2,8 @@ from joblib import Parallel, delayed
 from box import Box
 from loguru import logger
 
-from mlutils.distributedcomputing.job_scheduling import create_experiment_notebook, run_experiments_in_slurm, create_slurm_script
+from mlutils.distributedcomputing.job_scheduling import create_experiment_notebook, run_experiments_in_slurm, \
+    create_slurm_script, run_in_batches
 
 
 def run_experiments(run_ids, experiment_function, backend='joblib', **params):
@@ -24,6 +25,11 @@ def run_experiments(run_ids, experiment_function, backend='joblib', **params):
 
         notebook_run_id_param = params.get("notebook_run_id_param", "EXPERIMENT_INSTANCE_ID")
 
+        should_run_in_batches = params.get("run_in_batches", False)
+        username = params.get("username", "bogul")
+        batch_size = params.get("batch_size", 250)
+        sleep_interval = params.get("sleep_interval", 25)
+
         path_to_notebook = create_experiment_notebook(
             notebook_name=params['notebook_path'],
             experiment_function=experiment_function,
@@ -33,6 +39,21 @@ def run_experiments(run_ids, experiment_function, backend='joblib', **params):
         logger.info("Notebook path={}", path_to_notebook)
 
         slurm_script_path = create_slurm_script(params.get('slurm_arguments', {}))
+
+        if should_run_in_batches:
+            return run_in_batches(
+                run_ids=run_ids,
+                batch_size=250,
+                sleep_interval=25,
+                command = lambda single_batch: run_experiments_in_slurm(
+                    run_ids=single_batch,
+                    notebook_path=str(path_to_notebook),
+                    output_dir_path = params.get('output_dir_path', None),
+                    papermill_path = params.get('papermill_path', None),
+                    script_path = slurm_script_path,
+                    notebook_run_id_param=notebook_run_id_param,
+                )
+            )
 
         return run_experiments_in_slurm(
             run_ids=run_ids,
