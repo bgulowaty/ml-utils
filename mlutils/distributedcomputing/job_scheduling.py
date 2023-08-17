@@ -8,6 +8,8 @@ import stat
 import nbformat
 import pathlib
 import uuid
+from joblib import delayed, Parallel
+from tqdm import tqdm
 from loguru import logger
 
 slurm_base_params = {
@@ -16,6 +18,38 @@ slurm_base_params = {
     "mem": "16gb",
     "time": "8:00:00"
 }
+
+
+def run_in_papermill(run_ids, notebook_path, output_dir_path=None, papermill_path=None, n_jobs=None,
+                     notebook_run_id_param="EXPERIMENT_INSTANCE_ID"):
+
+    import papermill as pm
+
+    if papermill_path is None:
+        papermill_path = os.path.join(os.path.dirname(sys.executable), "papermill")
+
+    if output_dir_path is None:
+        output_dir_path = pathlib.Path(tempfile.mkdtemp())
+
+    if n_jobs is None:
+        n_jobs = 4
+
+    logger.info("""
+    papermill_path={}
+    output_dir_path={}
+    n_jobs={}""", papermill_path, output_dir_path, n_jobs)
+    params = {}
+
+    def create_params(run_id):
+        params = {}
+        params[notebook_run_id_param] = run_id
+        return params
+
+    return Parallel(n_jobs=n_jobs, backend='threading')(
+        delayed(pm.execute_notebook)
+        (notebook_path, f"{str(output_dir_path)}/{run_id}.ipynb", parameters=create_params(run_id))
+        for run_id in tqdm(run_ids)
+    )
 
 
 def create_slurm_script(params = {}):
