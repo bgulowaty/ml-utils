@@ -1,16 +1,17 @@
-import subprocess
-import importlib.resources
-import time
-import sys
-import tempfile
 import os
-import stat
-import nbformat
 import pathlib
+import stat
+import subprocess
+import tempfile
 import uuid
+
+import nbformat
+import sys
+import time
 from joblib import delayed, Parallel
-from tqdm import tqdm
 from loguru import logger
+from nbclient.exceptions import CellTimeoutError
+from tqdm import tqdm
 
 slurm_base_params = {
     "N": "1",
@@ -21,8 +22,7 @@ slurm_base_params = {
 
 
 def run_in_papermill(run_ids, notebook_path, output_dir_path=None, papermill_path=None, n_jobs=None,
-                     notebook_run_id_param="EXPERIMENT_INSTANCE_ID"):
-
+                     notebook_run_id_param="EXPERIMENT_INSTANCE_ID", *args, **kwargs):
     import papermill as pm
 
     if papermill_path is None:
@@ -37,8 +37,8 @@ def run_in_papermill(run_ids, notebook_path, output_dir_path=None, papermill_pat
     logger.info("""
     papermill_path={}
     output_dir_path={}
-    n_jobs={}""", papermill_path, output_dir_path, n_jobs)
-    params = {}
+    n_jobs={}
+    other_args={} {}""", papermill_path, output_dir_path, n_jobs, args, kwargs)
 
     def create_params(run_id):
         params = {}
@@ -46,13 +46,22 @@ def run_in_papermill(run_ids, notebook_path, output_dir_path=None, papermill_pat
         return params
 
     return Parallel(n_jobs=n_jobs, backend='threading')(
-        delayed(pm.execute_notebook)
-        (notebook_path, f"{str(output_dir_path)}/{run_id}.ipynb", parameters=create_params(run_id))
+        delayed(catch_and_return_none(pm.execute_notebook))
+        (notebook_path, f"{str(output_dir_path)}/{run_id}.ipynb", parameters=create_params(run_id),
+         raise_on_iopub_timeout=False, *args, **kwargs)
         for run_id in tqdm(run_ids)
     )
 
 
-def create_slurm_script(params = {}):
+def catch_and_return_none(func):
+    try:
+        return lambda *args, **kwargs: func(*args, **kwargs)
+    except CellTimeoutError as e:
+        logger.warning(e)
+        return None
+
+
+def create_slurm_script(params={}):
     final_params = {**slurm_base_params, **params}
 
     file_lines = [
@@ -135,9 +144,11 @@ if {instance_id_param_name} is None:
 
     return path
 
+
 how_many_jobs = lambda username: int(
     subprocess.run(f"squeue | grep {username} | wc -l", stdout=subprocess.PIPE, shell=True).stdout.decode(
         'utf-8').strip())
+
 
 def run_experiments_in_slurm(run_ids, notebook_path, output_dir_path=None, papermill_path=None, script_path=None,
                              notebook_run_id_param="EXPERIMENT_INSTANCE_ID"):
@@ -177,9 +188,7 @@ def chunks(lst, n):
         yield lst[i:i + n]
 
 
-
-
-def run_in_batches(run_ids, command, username = 'bogul', batch_size=250, sleep_interval=25):
+def run_in_batches(run_ids, command, username='bogul', batch_size=250, sleep_interval=25):
     chunked_run_ids = chunks(run_ids, batch_size)
 
     while (True):

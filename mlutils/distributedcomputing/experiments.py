@@ -38,7 +38,8 @@ def run_experiments(run_ids, experiment_function, backend='joblib', **params):
                                 n_jobs=params.get("n_jobs", -1),
                                 notebook_run_id_param=notebook_run_id_param,
                                 papermill_path=params.get("papermill_path", None),
-                                output_dir_path=params.get("output_dir_path", None))
+                                output_dir_path=params.get("output_dir_path", None),
+                                execution_timeout=params.get("execution_timeout", 600))
 
     elif backend == "slurm":
         logger.warning("Using SLURM backend. Make sure you execute this function not from experiment notebook!")

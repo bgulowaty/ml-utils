@@ -25,3 +25,13 @@ def encode_train_test_to_labels(train_dataset, test_dataset):
 
     return train_encoded, test_encoded
 
+def encode_to_labels(dataset):
+    if len(dataset.shape) != 2:
+        raise Exception("Only 2d arrays are supported")
+
+    encoders = [RefitableLabelEncoder() for _ in range(dataset.shape[1])]
+
+    encoders_iterator = iter(encoders)
+    train_encoded = np.apply_along_axis(lambda col: next(encoders_iterator).fit_transform(col), 0, dataset)
+
+    return train_encoded

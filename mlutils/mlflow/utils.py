@@ -6,6 +6,7 @@ from joblib import Parallel, delayed
 from mlflow import MlflowClient
 from tqdm import tqdm
 from loguru import logger
+from copy import deepcopy
 
 def terminate_run(run_id, client = MlflowClient()):
     client.set_terminated(run_id, "FINISHED")
@@ -35,12 +36,12 @@ def create_runs_for_params(params, experiment_id = None, experiment_name = None,
 
 
     def create_run_and_log_params(params):
-        client = MlflowClient()
-        run = client.create_run(experiment_id=experiment_id)
+        thread_client = deepcopy(client)
+        run = thread_client.create_run(experiment_id=experiment_id)
         run_id = run.info.run_id
 
         for key, val in params.items():
-            client.log_param(run_id, key, val)
+            thread_client.log_param(run_id, key, val)
 
         return run_id
 
