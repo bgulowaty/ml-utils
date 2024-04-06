@@ -21,3 +21,6 @@ def compute_metric_ovo(x, y, metric):
 
 def list_with_repeated_elements(input_list, n_repeated):
     return [val for val in input_list for _ in range(n_repeated)]
+
+def exclude_indices(arr, indices):
+    return arr[~np.isin(np.arange(arr.shape[0]), indices)]

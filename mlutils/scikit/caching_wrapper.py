@@ -174,15 +174,25 @@ def wrap_classifier(classifier, cache_factory = lambda: cachetools.LFUCache(maxs
 
     return classifier
 
+def sorting_wrapper(predict_func):
+    def wrapper(x, *args, **kwargs):
+        sort_idx = np.argsort(x)
+        desort_idx = np.argsort(sort_idx)
 
-def joblib_caching_wrapper(clf, verbose=True):
+        y_sorted = predict_func(x[sort_idx], *args, **kwargs)
+
+        return y_sorted[sort_idx][desort_idx]
+
+    return wrapper
+
+def joblib_caching_wrapper(clf, verbose=False):
     clf = deepcopy(clf)
 
     if joblib_caching_wrapper.joblib_memory is None:
         temp_path = tempfile.mkdtemp()
         if verbose:
             print(f"Caching temp path={temp_path}")
-        joblib_caching_wrapper.joblib_memory = Memory(temp_path)
+        joblib_caching_wrapper.joblib_memory = Memory(temp_path, verbose=1 if verbose else 0)
 
     clf.predict = joblib_caching_wrapper.joblib_memory.cache(clf.predict)
     clf.predict_proba = joblib_caching_wrapper.joblib_memory.cache(clf.predict_proba)
